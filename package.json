@@ -1,0 +1,32 @@
+{
+  "name": "alzo",
+  "version": "1.0.0",
+  "description": "Alzo Caregiver & Doctor Patient Management Portal",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "build": "echo 'No build step required'",
+    "test": "node -e \"require('./backend/server.js')\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^1.20.3",
+    "cloudinary": "^2.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.13.3",
+    "nanoid": "^3.3.11",
+    "nodemon": "^3.1.9",
+    "pusher": "^5.2.0",
+    "serverless-http": "^3.2.0",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0"
+  }
+}

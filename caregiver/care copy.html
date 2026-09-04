@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALZO - Caregiver Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2D5BFF',
+                        secondary: '#FF3B3B'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .patient-card:hover {
+            transform: translateY(-4px);
+            transition: all 0.3s ease;
+        }
+        .blur-bg {
+            filter: blur(4px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Patient ID Modal -->
+    <div id="patientIdModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-4">Add Patient</h2>
+            <form id="patientIdForm">
+                <div class="mb-4">
+                    <label for="patientId" class="block text-gray-700 font-medium mb-2 text-sm">Patient ID</label>
+                    <input type="text" id="patientId" name="patientId" class="w-full px-4 py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary" required />
+                </div>
+                <div id="patientIdError" class="text-red-500 text-center text-sm mb-4 hidden"></div>
+                <div class="flex space-x-4">
+                    <button type="button" id="cancelPatientId" class="w-1/2 bg-gray-300 text-gray-700 py-3 rounded-button font-semibold hover:bg-gray-400">Cancel</button>
+                    <button type="submit" id="submitPatientId" class="w-1/2 bg-primary text-white py-3 rounded-button font-semibold hover:bg-primary/90">Add Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="flex h-screen" id="dashboardContent">
+        <aside class="w-64 bg-white shadow-lg">
+            <div class="p-4 border-b">
+                <div class="font-['Pacifico'] text-2xl text-primary">ALZO</div>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <i class="ri-user-line text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p id="caregiverName" class="font-medium">Loading...</p>
+                        <p class="text-sm text-gray-500">Caregiver</p>
+                    </div>
+                </div>
+                <nav>
+                    <a href="/caregiver/care.html" class="flex items-center p-3 mb-2 bg-primary bg-opacity-10 text-primary rounded-button">
+                        <i class="ri-dashboard-line mr-3"></i>
+                        Dashboard
+                    </a>
+                    <a href="/caregiver/patients.html" class="flex items-center p-3 mb-2 hover:bg-gray-100 rounded-button">
+                        <i class="ri-user-heart-line mr-3"></i>
+                        Patients
+                    </a>
+                    <a href="/caregiver/profile.html" class="flex items-center p-3 mb-2 hover:bg-gray-100 rounded-button">
+                        <i class="ri-user-settings-line mr-3"></i>
+                        Profile
+                    </a>
+                    <button id="logoutButton" class="flex items-center p-3 hover:bg-gray-100 rounded-button w-full text-left">
+                        <i class="ri-logout-box-line mr-3"></i>
+                        Logout
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto">
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <div class="flex items-center">
+                        <h1 class="text-xl font-semibold">Caregiver Dashboard</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="openAddPatientModal()" class="px-4 py-2 bg-primary text-white rounded-button font-semibold hover:bg-primary/90">
+                            <i class="ri-user-add-line mr-2"></i>Add Patient
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-6">
+                <div class="mb-8">
+                    <h1 id="welcomeMessage" class="text-2xl font-semibold mb-2">Welcome back, Loading...!</h1>
+                    <p class="text-gray-600">Here's the overview of your managed patients</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-medium mb-2">Total Patients</h3>
+                        <p id="totalPatients" class="text-2xl font-semibold text-primary">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-medium mb-2">Stable Patients</h3>
+                        <p id="stablePatients" class="text-2xl font-semibold text-green-500">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-medium mb-2">Critical Patients</h3>
+                        <p id="criticalPatients" class="text-2xl font-semibold text-red-500">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-medium mb-2">Active SOS Alerts</h3>
+                        <p id="sosAlerts" class="text-2xl font-semibold text-orange-500">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-medium mb-2">Recovering Patients</h3>
+                        <p id="recoveringPatients" class="text-2xl font-semibold text-blue-500">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-medium mb-2">Under Observation</h3>
+                        <p id="underObservationPatients" class="text-2xl font-semibold text-yellow-500">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-medium mb-2">Recent Activity</h3>
+                        <p id="recentActivity" class="text-sm text-gray-600">No recent activity</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-medium mb-2">Pending Tasks</h3>
+                        <p id="pendingTasks" class="text-sm text-gray-600">No pending tasks</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold mb-4">Managed Patients</h2>
+                    <div id="patientsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <p class="text-sm text-gray-500">No patients added yet</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let caregiverData = null;
+
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.log('No token found, redirecting to /login');
+                window.location.href = '/login';
+                return null;
+            }
+            try {
+                console.log('Checking auth with token');
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Auth check failed:', errorData.message);
+                    throw new Error(errorData.message || 'Authentication failed');
+                }
+                const data = await response.json();
+                console.log('Auth check response:', data);
+                if (data.role !== 'caregiver') {
+                    console.log('User role is not caregiver:', data.role);
+                    window.location.href = '/role';
+                    return null;
+                }
+                return data;
+            } catch (err) {
+                console.error('Auth error:', err.message);
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return null;
+            }
+        }
+
+        function openAddPatientModal() {
+            document.getElementById('patientIdModal').classList.remove('hidden');
+            document.getElementById('dashboardContent').classList.add('blur-bg');
+        }
+
+        function closeAddPatientModal() {
+            document.getElementById('patientIdModal').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('blur-bg');
+            document.getElementById('patientIdForm').reset();
+            document.getElementById('patientIdError').classList.add('hidden');
+        }
+
+        async function handlePatientIdSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const patientId = form.patientId.value.trim();
+            const errorMessage = document.getElementById('patientIdError');
+            const submitButton = document.getElementById('submitPatientId');
+            errorMessage.classList.add('hidden');
+            submitButton.textContent = 'Adding...';
+            submitButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/auth/caregiver/add-patient', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ patientId })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Invalid patient ID');
+                }
+                console.log('Patient added:', patientId);
+                closeAddPatientModal();
+                await loadDashboardData();
+                await loadPatients();
+            } catch (err) {
+                console.error('Add patient error:', err.message);
+                errorMessage.textContent = err.message || 'Invalid patient ID. Please try again.';
+                errorMessage.classList.remove('hidden');
+                submitButton.textContent = 'Add Patient';
+                submitButton.disabled = false;
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                const statsResponse = await fetch('/api/auth/caregiver/stats', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (!statsResponse.ok) {
+                    const errorData = await statsResponse.json();
+                    throw new Error(errorData.message || 'Failed to fetch stats');
+                }
+                const stats = await statsResponse.json();
+                console.log('Stats fetched:', stats);
+
+                document.getElementById('totalPatients').textContent = stats.totalPatients;
+                document.getElementById('stablePatients').textContent = stats.conditionBreakdown.Stable;
+                document.getElementById('criticalPatients').textContent = stats.conditionBreakdown.Critical;
+                document.getElementById('recoveringPatients').textContent = stats.conditionBreakdown.Recovering;
+                document.getElementById('underObservationPatients').textContent = stats.conditionBreakdown['Under Observation'];
+                document.getElementById('sosAlerts').textContent = stats.totalSosAlerts;
+                document.getElementById('recentActivity').textContent = stats.recentActivity.length > 0
+                    ? stats.recentActivity.map(a => `${a.message} at ${new Date(a.timestamp).toLocaleString()}`).join(', ')
+                    : 'No recent activity';
+                document.getElementById('pendingTasks').textContent = stats.tasks.length > 0
+                    ? stats.tasks.map(t => `${t.description} (${t.priority})`).join(', ')
+                    : 'No pending tasks';
+            } catch (err) {
+                console.error('Load stats error:', err.message);
+                alert('Failed to load dashboard data. Please try again.');
+            }
+        }
+
+        async function loadPatients() {
+            try {
+                const response = await fetch('/api/auth/caregiver/patients', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch patients');
+                }
+                const patients = await response.json();
+                console.log('Patients fetched:', patients);
+
+                const patientsList = document.getElementById('patientsList');
+                patientsList.innerHTML = patients.length > 0 ? patients.map(patient => `
+                    <a href="/caregiver/patient.html?patientId=${patient.patientId}" class="patient-card bg-white p-4 rounded-lg shadow-sm cursor-pointer">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <i class="ri-user-smile-line text-blue-500"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h4 class="font-medium">${patient.name}</h4>
+                                <p class="text-sm text-gray-500">ID: ${patient.patientId}</p>
+                            </div>
+                            <span class="ml-auto px-2 py-1 text-sm rounded-full ${
+                                patient.condition === 'Stable' ? 'bg-green-100 text-green-700' :
+                                patient.condition === 'Critical' ? 'bg-red-100 text-red-700' :
+                                patient.condition === 'Recovering' ? 'bg-blue-100 text-blue-700' :
+                                'bg-yellow-100 text-yellow-700'
+                            }">${patient.condition}</span>
+                        </div>
+                    </a>
+                `).join('') : '<p class="text-sm text-gray-500">No patients added yet</p>';
+            } catch (err) {
+                console.error('Load patients error:', err.message);
+                document.getElementById('patientsList').innerHTML = '<p class="text-sm text-red-500">Failed to load patients. Please try again.</p>';
+            }
+        }
+
+        function handleLogout() {
+            console.log('Logging out');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOM loaded, checking auth');
+            const userData = await checkAuth();
+            if (!userData) return;
+            caregiverData = userData;
+            document.getElementById('caregiverName').textContent = userData.name;
+            document.getElementById('welcomeMessage').textContent = `Welcome back, ${userData.name}!`;
+            await loadDashboardData();
+            await loadPatients();
+
+            document.getElementById('patientIdForm').addEventListener('submit', handlePatientIdSubmit);
+            document.getElementById('cancelPatientId').addEventListener('click', closeAddPatientModal);
+            document.getElementById('logoutButton').addEventListener('click', handleLogout);
+        });
+    </script>
+</body>
+</html>

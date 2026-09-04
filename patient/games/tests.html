@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALZO - Cognitive Assessment Games</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet"/>
+    <link href="./games.css" rel="stylesheet">
+    <script src="https://js.pusher.com/8.2/pusher.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#57B5E7',
+                        secondary: '#8DD3C7',
+                        card: '#F9FAFB'
+                    },
+                    borderRadius: {
+                        button: '8px',
+                        card: '12px'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Pacifico', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card { background-color: #F9FAFB; border-radius: 12px; padding: 16px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        #notificationDropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+        #notificationDropdown::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        #notificationDropdown::-webkit-scrollbar-thumb {
+            background: #57B5E7;
+            border-radius: 3px;
+        }
+        #notificationDropdown::-webkit-scrollbar-thumb:hover {
+            background: #4a9fd5;
+        }
+        .animate-slide-down {
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-10%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex">
+    <aside class="fixed top-0 left-0 w-64 h-full bg-white shadow-lg">
+        <div class="py-6 px-4">
+            <div class="text-2xl font-display text-primary mb-8">ALZO</div>
+            <nav class="space-y-4">
+                <a href="/patient/pat.html" class="flex items-center space-x-3 px-4 py-3 rounded-lg">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="ri-home-line text-lg text-gray-600"></i>
+                    </div>
+                    <span class="text-sm text-gray-600">Home</span>
+                </a>
+                <a href="/patient/games/tests.html" class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-primary bg-opacity-10">
+                    <div class="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
+                        <i class="ri-brain-line text-lg text-primary"></i>
+                    </div>
+                    <span class="text-sm text-primary font-medium">Tests</span>
+                </a>
+                <a href="/patient/appointments.html" class="flex items-center space-x-3 px-4 py-3 rounded-lg">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="ri-calendar-line text-lg text-gray-600"></i>
+                    </div>
+                    <span class="text-sm text-gray-600">Appointments</span>
+                </a>
+                <a href="/patient/game-records.html" class="flex items-center space-x-3 px-4 py-3 rounded-lg">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="ri-bar-chart-2-line text-lg text-gray-600"></i>
+                    </div>
+                    <span class="text-sm text-gray-600">Game Records</span>
+                </a>
+                <a href="/patient/medical-records.html" class="flex items-center space-x-3 px-4 py-3 bg-gray-100 rounded-lg">
+                    <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <i class="ri-file-text-line text-lg text-gray-600"></i>
+                    </div>
+                    <span class="text-sm text-gray-600 font-medium">Medical Records</span>
+                </a>
+                <a href="/patient/profile.html" class="flex items-center space-x-3 px-4 py-3 rounded-lg">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="ri-user-settings-line text-lg text-gray-600"></i>
+                    </div>
+                    <span class="text-sm text-gray-600">Profile</span>
+                </a>
+                <button id="logoutButton" class="flex items-center space-x-3 px-4 py-3 rounded-lg w-full text-left">
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                        <i class="ri-logout-box-line text-lg text-gray-600"></i>
+                    </div>
+                    <span class="text-sm text-gray-600">Logout</span>
+                </button>
+            </nav>
+        </div>
+    </aside>
+    <div class="flex-1 ml-64 max-w-7xl mx-auto px-4 py-8">
+        <header class="py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="text-xl font-semibold">
+                    <span id="userName">Patient</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button id="notificationButton" class="flex items-center space-x-2 px-3 py-2 bg-primary text-white rounded-button hover:bg-primary/90 relative">
+                        <i class="ri-notification-3-line"></i>
+                        <span id="notificationCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-card rounded-card shadow-lg z-10 max-h-96 overflow-y-auto">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <h3 class="font-semibold text-gray-700">Notifications</h3>
+                            <button id="clearNotificationsButton" class="text-sm text-primary hover:underline">Clear All</button>
+                        </div>
+                        <div id="notificationList" class="divide-y"></div>
+                        <div class="p-4 text-center text-sm text-gray-500" id="noNotifications">No notifications</div>
+                    </div>
+                </div>
+                <button onclick="sendSosAlert()" class="bg-red-500 text-white px-4 py-2 rounded-button font-semibold hover:bg-red-600">
+                    <i class="ri-alarm-warning-line mr-2"></i>SOS
+                </button>
+            </div>
+        </header>
+        <div id="sosFeedback" class="text-center text-sm mb-4 hidden"></div>
+        <main>
+            <div class="mb-8">
+                <h1 class="text-2xl font-semibold mb-2">Cognitive Assessment Games</h1>
+                <p class="text-gray-600">These interactive games help assess cognitive functions like memory, attention, and problem-solving skills.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="card game-card cursor-pointer" onclick="selectGame('clock')">
+                    <div class="flex items-start">
+                        <div class="game-icon text-2xl">
+                            <i class="ri-time-line"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-semibold text-lg">Clock Drawing Test</h3>
+                            <p class="text-gray-600 text-sm mt-1">Set the clock hands to show the requested time.</p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Visuospatial</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Executive Function</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card game-card cursor-pointer" onclick="selectGame('trail')">
+                    <div class="flex items-start">
+                        <div class="game-icon text-2xl">
+                            <i class="ri-route-line"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-semibold text-lg">Trail Making Test</h3>
+                            <p class="text-gray-600 text-sm mt-1">Connect numbered dots in sequential order.</p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Visual Attention</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Task Switching</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card game-card cursor-pointer" onclick="selectGame('nback')">
+                    <div class="flex items-start">
+                        <div class="game-icon text-2xl">
+                            <i class="ri-brain-line"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-semibold text-lg">N-Back Memory Test</h3>
+                            <p class="text-gray-600 text-sm mt-1">Press the button when you see a shape that matches the previous one.</p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Working Memory</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Attention</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card game-card cursor-pointer" onclick="selectGame('maze')">
+                    <div class="flex items-start">
+                        <div class="game-icon text-2xl">
+                            <i class="ri-compass-3-line"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="font-semibold text-lg">Maze Navigation Task</h3>
+                            <p class="text-gray-600 text-sm mt-1">Navigate through the maze to reach the exit using arrow keys.</p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Spatial Navigation</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Problem Solving</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="gameContainer" class="hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 id="gameTitle" class="text-xl font-semibold"></h2>
+                    <button onclick="closeGame()" class="text-gray-500 hover:text-gray-700">
+                        <i class="ri-close-line text-xl"></i>
+                    </button>
+                </div>
+                <div id="gameContent" class="card alzo-game-container"></div>
+            </div>
+            <div id="resultsContainer" class="hidden mt-6">
+                <h3 class="text-lg font-semibold mb-2">Test Results</h3>
+                <div id="resultsContent" class="card"></div>
+            </div>
+        </main>
+    </div>
+    <script type="module">
+        import ALZOGames from './index.js';
+
+        let notifications = [];
+        let currentUserEmail = null;
+        const notificationButton = document.getElementById('notificationButton');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        const notificationList = document.getElementById('notificationList');
+        const notificationCount = document.getElementById('notificationCount');
+        const noNotifications = document.getElementById('noNotifications');
+
+        function loadNotificationsFromStorage(userEmail) {
+            const storedNotifications = localStorage.getItem(`notifications_${userEmail}`);
+            if (storedNotifications) {
+                notifications = JSON.parse(storedNotifications);
+                const now = new Date();
+                notifications = notifications.filter(n => {
+                    const notificationTime = new Date(n.time);
+                    return (now - notificationTime) / (1000 * 60 * 60 * 24) <= 7;
+                });
+                saveNotificationsToStorage(userEmail);
+                updateNotifications();
+            }
+        }
+
+        function saveNotificationsToStorage(userEmail) {
+            localStorage.setItem(`notifications_${userEmail}`, JSON.stringify(notifications));
+        }
+
+        function clearNotifications(userEmail) {
+            notifications = [];
+            localStorage.removeItem(`notifications_${userEmail}`);
+            updateNotifications();
+        }
+
+        const pusher = new Pusher('06feaf595c32d14f5ea2', {
+            cluster: 'ap2'
+        });
+        const channel = pusher.subscribe('notifications');
+
+        channel.bind('new-medication', function(data) {
+            notifications.push({
+                id: data.id,
+                type: 'Medication',
+                message: `New medication assigned: ${data.name}`,
+                time: new Date(data.time).toLocaleString()
+            });
+            updateNotifications();
+            saveNotificationsToStorage(currentUserEmail);
+        });
+
+        channel.bind('appointment-status', function(data) {
+            notifications.push({
+                id: data.id,
+                type: 'Appointment',
+                message: `Appointment status updated to ${data.status}`,
+                time: new Date(data.time).toLocaleString()
+            });
+            updateNotifications();
+            saveNotificationsToStorage(currentUserEmail);
+        });
+
+        channel.bind('new-video', function(data) {
+            notifications.push({
+                id: data.id,
+                type: 'Video',
+                message: `New educational video: ${data.title}`,
+                time: new Date(data.time).toLocaleString()
+            });
+            updateNotifications();
+            saveNotificationsToStorage(currentUserEmail);
+        });
+
+        channel.bind('game-result', function(data) {
+            notifications.push({
+                id: data.id,
+                type: 'Game Result',
+                message: `Completed ${data.gameType} with score: ${data.score || data.percentageScore || data.time || 'N/A'}`,
+                time: new Date(data.time).toLocaleString()
+            });
+            updateNotifications();
+            saveNotificationsToStorage(currentUserEmail);
+        });
+
+        function updateNotifications() {
+            if (notifications.length > 50) {
+                notifications = notifications.slice(-50);
+            }
+            notificationList.innerHTML = notifications.map(notification => `
+                <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center space-x-3">
+                        <i class="ri-${
+                            notification.type === 'Medication' ? 'capsule-line' :
+                            notification.type === 'Appointment' ? 'calendar-line' :
+                            notification.type === 'Video' ? 'video-line' :
+                            'brain-line'
+                        } text-primary"></i>
+                        <div>
+                            <p class="font-medium text-gray-700">${notification.type}</p>
+                            <p class="text-sm text-gray-500">${notification.message}</p>
+                            <p class="text-xs text-gray-400">${notification.time}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            noNotifications.classList.toggle('hidden', notifications.length > 0);
+            notificationCount.textContent = notifications.length;
+            notificationCount.classList.toggle('hidden', notifications.length === 0);
+        }
+
+        notificationButton.addEventListener('click', () => {
+            notificationDropdown.classList.toggle('hidden');
+            if (!notificationDropdown.classList.contains('hidden')) {
+                notificationDropdown.classList.add('animate-slide-down');
+                setTimeout(() => notificationDropdown.classList.remove('animate-slide-down'), 300);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!notificationButton.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('clearNotificationsButton').addEventListener('click', () => {
+            if (currentUserEmail) {
+                clearNotifications(currentUserEmail);
+            }
+        });
+
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.log('No token found, redirecting to /login');
+                window.location.href = '/login';
+                return null;
+            }
+            try {
+                console.log('Checking auth with token');
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Auth check failed:', errorData.message);
+                    throw new Error(errorData.message || 'Authentication failed');
+                }
+                const data = await response.json();
+                console.log('Auth check response:', data);
+                if (data.role !== 'patient') {
+                    console.log('User role is not patient:', data.role);
+                    window.location.href = '/role';
+                    return null;
+                }
+                currentUserEmail = data.email;
+                loadNotificationsFromStorage(data.email);
+                return data;
+            } catch (err) {
+                console.error('Auth error:', err.message);
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return null;
+            }
+        }
+
+        async function loadUserData() {
+            const userData = await checkAuth();
+            if (!userData) return;
+            document.getElementById('userName').textContent = userData.name || 'Patient';
+        }
+
+        async function sendSosAlert() {
+            const feedback = document.getElementById('sosFeedback');
+            feedback.classList.add('hidden');
+            feedback.classList.remove('text-green-500', 'text-red-500');
+            try {
+                console.log('Sending SOS alert');
+                const response = await fetch('/api/auth/patient/sos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({})
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to send SOS alert');
+                }
+                console.log('SOS alert sent to all doctors');
+                feedback.textContent = 'SOS alert sent to all doctors!';
+                feedback.classList.add('text-green-500');
+                feedback.classList.remove('hidden');
+                setTimeout(() => feedback.classList.add('hidden'), 3000);
+            } catch (err) {
+                console.error('Send SOS error:', err.message);
+                feedback.textContent = err.message || 'Failed to send SOS alert.';
+                feedback.classList.add('text-red-500');
+                feedback.classList.remove('hidden');
+                setTimeout(() => feedback.classList.add('hidden'), 3000);
+            }
+        }
+
+        function handleLogout() {
+            console.log('Logging out');
+            if (currentUserEmail) {
+                clearNotifications(currentUserEmail);
+            }
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        let currentGame = null;
+
+        window.selectGame = async function(gameType) {
+            document.getElementById('gameContainer').classList.remove('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            const gameDesc = ALZOGames.getGameDescription(gameType);
+            document.getElementById('gameTitle').textContent = gameDesc.title;
+            const gameContent = document.getElementById('gameContent');
+            gameContent.innerHTML = '';
+            currentGame = ALZOGames.init(gameType, gameContent, {}, handleGameComplete);
+            document.getElementById('gameContainer').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.closeGame = function() {
+            document.getElementById('gameContainer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            currentGame = null;
+        };
+
+        async function handleGameComplete(results) {
+            console.log('Game completed with results:', results);
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContainer.classList.remove('hidden');
+
+            let resultsHTML = '';
+            if (typeof results === 'number') {
+                resultsHTML = `
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-primary">${results}%</div>
+                        <p class="text-gray-600 mt-2">Accuracy Score</p>
+                    </div>
+                `;
+            } else if (results.time !== undefined && results.errors !== undefined) {
+                resultsHTML = `
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div class="text-3xl font-bold text-primary">${results.time.toFixed(1)}s</div>
+                            <p class="text-gray-600 mt-2">Completion Time</p>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-primary">${results.errors}</div>
+                            <p class="text-gray-600 mt-2">Errors</p>
+                        </div>
+                    </div>
+                `;
+            } else if (results.correct !== undefined) {
+                resultsHTML = `
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-3xl font-bold text-green-500">${results.correct}</div>
+                            <p class="text-gray-600 mt-2">Correct</p>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-red-500">${results.incorrect}</div>
+                            <p class="text-gray-600 mt-2">Incorrect</p>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-orange-500">${results.missed}</div>
+                            <p class="text-gray-600 mt-2">Missed</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <div class="text-xl font-bold text-primary">${results.percentageScore}%</div>
+                        <p class="text-gray-600 mt-1">Overall Score</p>
+                    </div>
+                `;
+            } else {
+                resultsHTML = `
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-primary">${results.toFixed(1)}s</div>
+                        <p class="text-gray-600 mt-2">Completion Time</p>
+                    </div>
+                `;
+            }
+
+            resultsContent.innerHTML = resultsHTML;
+            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+
+            try {
+                const response = await fetch('/api/auth/patient/games', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        gameType: currentGame.gameType,
+                        results
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to save game results');
+                }
+                console.log('Game results saved:', results);
+            } catch (err) {
+                console.error('Save game results error:', err.message);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, loading patient data');
+            loadUserData();
+            updateNotifications();
+            document.getElementById('logoutButton').addEventListener('click', handleLogout);
+        });
+    </script>
+</body>
+</html>

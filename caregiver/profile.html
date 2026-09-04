@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALZO - Caregiver Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.pusher.com/8.2/pusher.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2D5BFF',
+                        secondary: '#FF3B3B',
+                        card: '#F9FAFB'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px',
+                        'card': '12px'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Pacifico', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .patient-card:hover {
+            transform: translateY(-4px);
+            transition: all 0.3s ease;
+        }
+        .blur-bg {
+            filter: blur(4px);
+            pointer-events: none;
+        }
+        #notificationDropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+        #notificationDropdown::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        #notificationDropdown::-webkit-scrollbar-thumb {
+            background: #2D5BFF;
+            border-radius: 3px;
+        }
+        #notificationDropdown::-webkit-scrollbar-thumb:hover {
+            background: #1e4cd9;
+        }
+        .animate-slide-down {
+            animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-10%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .disabled-input { pointer-events: none; opacity: 0.5; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex h-screen" id="dashboardContent">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40 lg:static lg:transform-none">
+            <div class="p-4 border-b flex items-center justify-between">
+                <div class="font-display text-xl sm:text-2xl text-primary">ALZO</div>
+                <button id="closeSidebar" class="lg:hidden text-gray-700 hover:text-primary focus:outline-none">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center mb-6">
+                    <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <i class="ri-user-line text-lg sm:text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p id="caregiverName" class="font-medium text-sm sm:text-base">Loading...</p>
+                        <p class="text-xs sm:text-sm text-gray-500">Caregiver</p>
+                    </div>
+                </div>
+                <nav>
+                    <a href="/caregiver/care.html" class="flex items-center p-3 mb-2 hover:bg-gray-100 rounded-button text-sm sm:text-base">
+                        <i class="ri-dashboard-line mr-3"></i>
+                        Dashboard
+                    </a>
+                    <a href="/caregiver/patients.html" class="flex items-center p-3 mb-2 hover:bg-gray-100 rounded-button text-sm sm:text-base">
+                        <i class="ri-user-heart-line mr-3"></i>
+                        Patients
+                    </a>
+                    <a href="/caregiver/profile.html" class="flex items-center p-3 mb-2 bg-primary bg-opacity-10 text-primary rounded-button text-sm sm:text-base">
+                        <i class="ri-user-settings-line mr-3"></i>
+                        Profile
+                    </a>
+                    <button id="logoutButton" class="flex items-center p-3 hover:bg-gray-100 rounded-button w-full text-left text-sm sm:text-base">
+                        <i class="ri-logout-box-line mr-3"></i>
+                        Logout
+                    </button>
+                </nav>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto lg:ml-0">
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-4 sm:px-6 py-4">
+                    <div class="flex items-center">
+                        <button id="openSidebar" class="lg:hidden text-gray-700 hover:text-primary focus:outline-none mr-4">
+                            <i class="ri-menu-line text-xl"></i>
+                        </button>
+                        <h1 class="text-lg sm:text-xl font-semibold">Caregiver Profile</h1>
+                    </div>
+                    <div class="flex items-center space-x-2 sm:space-x-4">
+                        <div class="relative">
+                            <button id="notificationButton" class="flex items-center space-x-2 px-3 py-2 bg-primary text-white rounded-button hover:bg-primary/90 relative">
+                                <i class="ri-notification-3-line text-sm sm:text-base"></i>
+                                <span id="notificationCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 sm:w-5 h-4 sm:h-5 flex items-center justify-center hidden">0</span>
+                            </button>
+                            <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-72 sm:w-80 bg-card rounded-card shadow-lg z-10 max-h-96 overflow-y-auto">
+                                <div class="p-3 sm:p-4 border-b flex justify-between items-center">
+                                    <h3 class="font-semibold text-gray-700 text-sm sm:text-base">Notifications</h3>
+                                    <button id="clearNotificationsButton" class="text-xs sm:text-sm text-primary hover:underline">Clear All</button>
+                                </div>
+                                <div id="notificationList" class="divide-y"></div>
+                                <div class="p-3 sm:p-4 text-center text-xs sm:text-sm text-gray-500" id="noNotifications">No notifications</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-4 sm:p-6">
+                <div class="bg-card p-4 sm:p-6 rounded-card shadow-sm mb-4 sm:mb-6">
+                    <h3 class="font-semibold mb-4 text-sm sm:text-base">Caregiver Profile</h3>
+                    <form id="profileForm">
+                        <div class="mb-4">
+                            <label for="profileName" class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Name</label>
+                            <input type="text" id="profileName" name="name" class="w-full px-4 py-2 sm:py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base" required />
+                        </div>
+                        <div class="mb-4">
+                            <label for="profileEmail" class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Email</label>
+                            <input type="email" id="profileEmail" name="email" class="w-full px-4 py-2 sm:py-3 rounded-md border border-gray-300 bg-gray-100 disabled-input text-sm sm:text-base" readonly />
+                        </div>
+                        <div class="mb-4">
+                            <label for="profileSosNumber" class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">SOS Number</label>
+                            <input type="text" id="profileSosNumber" name="sosNumber" class="w-full px-4 py-2 sm:py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base" placeholder="e.g., +1234567890" />
+                        </div>
+                        <div id="profileError" class="text-red-500 text-center text-xs sm:text-sm mb-4 hidden"></div>
+                        <div id="profileSuccess" class="text-green-500 text-center text-xs sm:text-sm mb-4 hidden"></div>
+                        <button type="submit" id="updateProfileButton" class="w-full bg-primary text-white py-2 sm:py-3 rounded-button font-semibold hover:bg-primary/90 text-sm sm:text-base">Update Profile</button>
+                    </form>
+                </div>
+                <div class="bg-card p-4 sm:p-6 rounded-card shadow-sm">
+                    <h3 class="font-semibold mb-4 text-sm sm:text-base">Change Password</h3>
+                    <form id="passwordForm">
+                        <div class="mb-4">
+                            <label for="currentPassword" class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">Current Password</label>
+                            <input type="password" id="currentPassword" name="currentPassword" class="w-full px-4 py-2 sm:py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base" required />
+                        </div>
+                        <div class="mb-4">
+                            <label for="newPassword" class="block text-gray-700 font-medium mb-2 text-sm sm:text-base">New Password</label>
+                            <input type="password" id="newPassword" name="newPassword" class="w-full px-4 py-2 sm:py-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary text-sm sm:text-base" required />
+                        </div>
+                        <div id="passwordError" class="text-red-500 text-center text-xs sm:text-sm mb-4 hidden"></div>
+                        <div id="passwordSuccess" class="text-green-500 text-center text-xs sm:text-sm mb-4 hidden"></div>
+                        <button type="submit" id="changePasswordButton" class="w-full bg-primary text-white py-2 sm:py-3 rounded-button font-semibold hover:bg-primary/90 text-sm sm:text-base">Change Password</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentUserEmail = null;
+        let notifications = [];
+        const notificationButton = document.getElementById('notificationButton');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        const notificationList = document.getElementById('notificationList');
+        const notificationCount = document.getElementById('notificationCount');
+        const noNotifications = document.getElementById('noNotifications');
+
+        function loadNotificationsFromStorage(userEmail) {
+            const storedNotifications = localStorage.getItem(`notifications_${userEmail}`);
+            if (storedNotifications) {
+                notifications = JSON.parse(storedNotifications);
+                const now = new Date();
+                notifications = notifications.filter(n => {
+                    const notificationTime = new Date(n.time);
+                    return (now - notificationTime) / (1000 * 60 * 60 * 24) <= 7;
+                });
+                saveNotificationsToStorage(userEmail);
+                updateNotifications();
+            }
+        }
+
+        function saveNotificationsToStorage(userEmail) {
+            localStorage.setItem(`notifications_${userEmail}`, JSON.stringify(notifications));
+        }
+
+        function clearNotifications(userEmail) {
+            notifications = [];
+            localStorage.removeItem(`notifications_${userEmail}`);
+            updateNotifications();
+        }
+
+        const pusher = new Pusher('06feaf595c32d14f5ea2', {
+            cluster: 'ap2'
+        });
+        const channel = pusher.subscribe('notifications');
+
+        channel.bind('new-sos-alert', function(data) {
+            notifications.push({
+                id: data.id,
+                type: 'SOS Alert',
+                message: `New SOS Alert from ${data.patientName}`,
+                time: new Date(data.time).toLocaleString()
+            });
+            updateNotifications();
+            saveNotificationsToStorage(currentUserEmail);
+        });
+
+        channel.bind('patient-condition-update', function(data) {
+            notifications.push({
+                id: data.id,
+                type: 'Patient Condition',
+                message: `Patient ${data.patientName}'s condition changed to ${data.condition}`,
+                time: new Date(data.time).toLocaleString()
+            });
+            updateNotifications();
+            saveNotificationsToStorage(currentUserEmail);
+        });
+
+        channel.bind('new-patient-added', function(data) {
+            notifications.push({
+                id: data.id,
+                type: 'New Patient',
+                message: `New patient ${data.patientName} added to your care`,
+                time: new Date(data.time).toLocaleString()
+            });
+            updateNotifications();
+            saveNotificationsToStorage(currentUserEmail);
+        });
+
+        function updateNotifications() {
+            if (notifications.length > 50) {
+                notifications = notifications.slice(-50);
+            }
+            notificationList.innerHTML = notifications.map(notification => `
+                <div class="p-3 sm:p-4 flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <i class="ri-${
+                            notification.type === 'SOS Alert' ? 'alarm-warning-line' :
+                            notification.type === 'Patient Condition' ? 'heart-pulse-line' :
+                            'user-add-line'
+                        } text-primary text-sm sm:text-base"></i>
+                        <div>
+                            <p class="font-medium text-gray-700 text-sm sm:text-base">${notification.type}</p>
+                            <p class="text-xs sm:text-sm text-gray-500">${notification.message}</p>
+                            <p class="text-xs text-gray-400">${notification.time}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            noNotifications.classList.toggle('hidden', notifications.length > 0);
+            notificationCount.textContent = notifications.length;
+            notificationCount.classList.toggle('hidden', notifications.length === 0);
+        }
+
+        notificationButton.addEventListener('click', () => {
+            notificationDropdown.classList.toggle('hidden');
+            if (!notificationDropdown.classList.contains('hidden')) {
+                notificationDropdown.classList.add('animate-slide-down');
+                setTimeout(() => notificationDropdown.classList.remove('animate-slide-down'), 300);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!notificationButton.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('clearNotificationsButton').addEventListener('click', () => {
+            if (currentUserEmail) {
+                clearNotifications(currentUserEmail);
+            }
+        });
+
+        async function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.log('No token found, redirecting to /login');
+                window.location.href = '/login';
+                return null;
+            }
+            try {
+                console.log('Checking auth with token');
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Auth check failed:', errorData.message);
+                    throw new Error(errorData.message || 'Authentication failed');
+                }
+                const data = await response.json();
+                console.log('Auth check response:', data);
+                if (data.role !== 'caregiver') {
+                    console.log('User role is not caregiver:', data.role);
+                    window.location.href = '/role';
+                    return null;
+                }
+                currentUserEmail = data.email;
+                loadNotificationsFromStorage(data.email);
+                return data;
+            } catch (err) {
+                console.error('Auth error:', err.message);
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                return null;
+            }
+        }
+
+        async function loadProfile() {
+            const userData = await checkAuth();
+            if (!userData) return;
+            document.getElementById('caregiverName').textContent = userData.name || 'Caregiver';
+            try {
+                const response = await fetch('/api/auth/caregiver/profile', {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch profile');
+                }
+                const profile = await response.json();
+                console.log('Profile fetched:', profile);
+                document.getElementById('profileName').value = profile.name;
+                document.getElementById('profileEmail').value = profile.email;
+                document.getElementById('profileSosNumber').value = profile.sosNumber || '';
+            } catch (err) {
+                console.error('Load profile error:', err.message);
+                document.getElementById('profileError').textContent = err.message || 'Failed to load profile.';
+                document.getElementById('profileError').classList.remove('hidden');
+            }
+        }
+
+        async function handleUpdateProfile(e) {
+            e.preventDefault();
+            const form = e.target;
+            const button = document.getElementById('updateProfileButton');
+            const errorMessage = document.getElementById('profileError');
+            const successMessage = document.getElementById('profileSuccess');
+            errorMessage.classList.add('hidden');
+            successMessage.classList.add('hidden');
+            button.textContent = 'Updating...';
+            button.disabled = true;
+            try {
+                const name = form.name.value.trim();
+                const sosNumber = form.sosNumber.value.trim();
+                const response = await fetch('/api/auth/caregiver/profile', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({ name, sosNumber })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update profile');
+                }
+                console.log('Profile updated:', { name, sosNumber });
+                document.getElementById('caregiverName').textContent = name || 'Caregiver';
+                successMessage.textContent = 'Profile updated successfully!';
+                successMessage.classList.remove('hidden');
+                button.textContent = 'Updated!';
+                setTimeout(() => {
+                    successMessage.classList.add('hidden');
+                    button.textContent = 'Update Profile';
+                    button.disabled = false;
+                }, 1000);
+            } catch (err) {
+                console.error('Update profile error:', err.message);
+                errorMessage.textContent = err.message || 'An error occurred. Please try again.';
+                errorMessage.classList.remove('hidden');
+                button.textContent = 'Update Profile';
+                button.disabled = false;
+            }
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const form = e.target;
+            const button = document.getElementById('changePasswordButton');
+            const errorMessage = document.getElementById('passwordError');
+            const successMessage = document.getElementById('passwordSuccess');
+            errorMessage.classList.add('hidden');
+            successMessage.classList.add('hidden');
+            button.textContent = 'Changing...';
+            button.disabled = true;
+            try {
+                const response = await fetch('/api/auth/caregiver/change-password', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        currentPassword: form.currentPassword.value,
+                        newPassword: form.newPassword.value
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to change password');
+                }
+                console.log('Password changed');
+                form.reset();
+                successMessage.textContent = 'Password changed successfully!';
+                successMessage.classList.remove('hidden');
+                button.textContent = 'Changed!';
+                setTimeout(() => {
+                    successMessage.classList.add('hidden');
+                    button.textContent = 'Change Password';
+                    button.disabled = false;
+                }, 1000);
+            } catch (err) {
+                console.error('Change password error:', err.message);
+                errorMessage.textContent = err.message || 'An error occurred. Please try again.';
+                errorMessage.classList.remove('hidden');
+                button.textContent = 'Change Password';
+                button.disabled = false;
+            }
+        }
+
+        function handleLogout() {
+            console.log('Logging out');
+            if (currentUserEmail) {
+                clearNotifications(currentUserEmail);
+            }
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, loading caregiver profile');
+            loadProfile();
+            updateNotifications();
+            document.getElementById('logoutButton').addEventListener('click', handleLogout);
+            document.getElementById('profileForm').addEventListener('submit', handleUpdateProfile);
+            document.getElementById('passwordForm').addEventListener('submit', handleChangePassword);
+
+            // Sidebar toggle
+            const openSidebarButton = document.getElementById('openSidebar');
+            const closeSidebarButton = document.getElementById('closeSidebar');
+            const sidebar = document.getElementById('sidebar');
+
+            openSidebarButton.addEventListener('click', () => {
+                sidebar.classList.remove('-translate-x-full');
+                document.body.classList.add('overflow-hidden');
+            });
+
+            closeSidebarButton.addEventListener('click', () => {
+                sidebar.classList.add('-translate-x-full');
+                document.body.classList.remove('overflow-hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!sidebar.contains(e.target) && !openSidebarButton.contains(e.target) && !sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    document.body.classList.remove('overflow-hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
